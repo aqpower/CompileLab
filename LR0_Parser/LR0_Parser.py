@@ -73,8 +73,18 @@ def closure(item_set, productions):
         
 
 
-# 定义函数执行 Goto 操作
+# 执行 Goto 操作
 def goto(item_set, symbol, productions):
+    """
+    获取当前状态，来了一个symbol之后，将会转移到的状态
+
+    Args:
+        item_set: 当前状态集.
+        symbol: 参数.
+        productions: 产生式规则
+    Returns:
+        type: 一个状态集，为当前状态转移到的状态集
+    """
     new_item_set = []  # 存储移进后的项目集
     for item in item_set:
         dot_index = item.right.find('•')
@@ -85,32 +95,30 @@ def goto(item_set, symbol, productions):
     return new_item_set
 
 
-# 定义函数获取项目集中的所有符号
+# 获取项目集中的所有符号
 def get_symbols(item_set):
     symbols = set()
     for item in item_set:
-        # 获取项目中的点后的符号
         if '•' in item.right:
             dot_index = item.right.index('•')
             if dot_index < len(item.right) - 1:
-                symbol = item.right[dot_index + 1]  # 获取点后的符号
+                symbol = item.right[dot_index + 1]  
                 symbols.add(symbol)
     return symbols
 
 
-# 递归构造项目集规范族的函数
+# 构造项目集规范族
 def build_item_sets(productions):
     item_sets = []  # 存储所有的项目集
 
     # 构建初始状态，即 0 号状态
-    initial_item_set = []  # 初始状态的项目集
-    initial_item_set.append(Production("E'", "•E"))  # 添加起始项目到初始项目集
+    initial_item_set = []  
+    initial_item_set.append(Production("E'", "•E"))  
 
-    # 执行闭包操作
+    # 为0号状态执行闭包操作
     closure(initial_item_set, productions)
     item_sets.append(initial_item_set)  # 将初始状态添加到项目集规范族中
 
-    # 构造一个状态
     def recursive_build(item_set):
         # 对当前状态的每个符号进行扩展
         for symbol in get_symbols(item_set):  # 获取项目集中的所有符号（非终结符和终结符）
@@ -134,54 +142,54 @@ def print_item_sets(item_sets):
         print()
 
 def fill_LR0_table(item_sets, productions, terminals, non_terminals):
+    """
+    构建LR0分析表
+    """
     action_table = {}  # 初始化 Action 表
     goto_table = {}    # 初始化 Goto 表
-    terminals.add('#')
+    terminals.add('#') 
+    # 遍历状态集
     for i, item_set in enumerate(item_sets):
+        # 考虑移进项目
+        # 思路是枚举每一个终结符和非终结符，并尝试在当前状态集下goto，看能否goto成功，能那么是移进项目
         for symbol in terminals | non_terminals:
-            # 填充 Action 表和 Goto 表
-
-            # 对于终结符的移进操作
             if symbol in terminals:
-                # 判断当前状态下该符号是否存在移进操作，然后填充 Action 表
                 next_state = goto(item_set, symbol, productions)
                 if next_state:
                     action_table[i, symbol] = ('shift', item_sets.index(next_state))
             
-            # 对于非终结符的 Goto 操作
             else:
-                # 判断当前状态下该符号是否存在 Goto 操作，然后填充 Goto 表
                 next_item_set = goto(item_set, symbol, productions)
                 if next_item_set in item_sets:
                     goto_table[i, symbol] = item_sets.index(next_item_set)
-        
-        # 对于规约动作和接受状态
-        # 检查当前状态的项目集是否有规约动作或接受状态，并填充 Action 表
-        for prod in item_set:
-            # 判断是否有规约动作
-            if prod.right.endswith('•'):
-                # 找到规约的产生式并填充 Action 表
-                for symbol in terminals:
-                    ind = 1
-                    tar = None
-                    for left in productions:
-                        for item in productions[left]:
-                            if item.right == prod.right.split('•')[0] and item.left == prod.left: 
-                                tar = ind
-                                break
-                            ind += 1
-                    if tar != None:
-                        action_table[i, symbol] = ('reduce', tar)  # 将规约动作填入 Action 表中
+        # 考虑每个状态集第一个产生式是否为归约项目
+        prod = item_set[0]
+        if prod.right.endswith('•'):
+            # 找到规约产生式的编号
+            ind = 1
+            tar = None
+            for left in productions:
+                for item in productions[left]:
+                    if item.right == prod.right.split('•')[0] and item.left == prod.left: 
+                        tar = ind
+                        break
+                    ind += 1
+            # 规约的时候，当前状态集遇到任意非终结符都进行规约！
+            for symbol in terminals:
+                if tar != None:
+                    action_table[i, symbol] = ('reduce', tar)  
 
-                # 检查是否为接受状态，将接受状态填入 Action 表
         if 'E' in item_set[0].left and item_set[0].right == 'E•':
-            action_table[i, '#'] = 'accept'  # 假设开始符号为 'E'，结束标记为 '#'
+            action_table[i, '#'] = 'accept'  
     
     return action_table, goto_table
 
 
 def parse(input_string, action_table, goto_table, productions):
-    stack_state = [0]
+    """
+    对输入的句子按照LR分析表开始语法分析。
+    """
+    stack_state = [0] 
     stack_symbol = ['#']
     input_symbols = input_string.split()[0] + '#'  # 输入符号串
     index = 0
@@ -195,7 +203,6 @@ def parse(input_string, action_table, goto_table, productions):
         action = action_table.get((current_state, current_symbol))
 
         if action:
-            print(action)
             
             if action== 'accept':
                 print("解析成功！")
@@ -217,13 +224,14 @@ def parse(input_string, action_table, goto_table, productions):
                             productions_for_reduce = proc
                         ind += 1
                 
-                
+                # 规约时候符号栈和状态栈都需要弹出相同数量的元素
                 for _ in range(len(productions_for_reduce.right)):
                     stack_symbol.pop()
                     stack_state.pop()
                 stack_symbol.append(productions_for_reduce.left)
                 print(stack_state)
                 print(stack_symbol)
+                # 解决符号栈状态栈数量不平衡的问题
                 while stack_state.__len__() != stack_symbol.__len__():
                     print(goto_table.get((stack_state[-1], stack_symbol[-1])))
                     stack_state.append(goto_table.get((stack_state[-1], stack_symbol[-1])))
@@ -252,6 +260,6 @@ item_sets = build_item_sets(productions)
 build_item_sets(productions)
 print_item_sets(item_sets)
 action_table, goto_table = fill_LR0_table(item_sets, productions, terminals, non_terminals)
-print_action_table(action_table)
-print_goto_table(goto_table)
+# print_action_table(action_table)
+# print_goto_table(goto_table)
 parse("acccd", action_table, goto_table, productions)
