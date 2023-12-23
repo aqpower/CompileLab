@@ -208,5 +208,7 @@ def parse(input_string, action_table, goto_table, productions):
 ## 结果
 分析成功😊
 ![](./res1.png)
+
 ![](./res2.png)
+
 ![](./res3.png)

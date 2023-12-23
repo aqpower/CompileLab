@@ -1,0 +1,6 @@
+program → begin block end
+block→ stmt| stmt block
+stmt→id:=expr;
+expr → expr + term | expr - term | term
+term → term * factor| term / factor | factor
+factor	→ ( expr ) | id | num

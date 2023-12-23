@@ -1,4 +1,5 @@
 #include <cctype>
+#include <cstdio>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -20,7 +21,7 @@ const std::unordered_set<std::string> KEYWORDS = {
 const std::unordered_set<std::string> SEPARATORS = {",", ";", "(",
                                                     ")", "{", "}"};
 
-std::unordered_map<std::string_view, TokenType> operatorSeparatorMap = {
+std::unordered_map<std::string, TokenType> operatorSeparatorMap = {
     {"+", OPERATOR},  {"-", OPERATOR},  {"*", OPERATOR},  {"/", OPERATOR},
     {"=", OPERATOR},  {":=", OPERATOR}, {"<", OPERATOR},  {"<=", OPERATOR},
     {">", OPERATOR},  {">=", OPERATOR}, {"<>", OPERATOR}, {",", SEPARATOR},
@@ -29,7 +30,7 @@ std::unordered_map<std::string_view, TokenType> operatorSeparatorMap = {
 
 class SymbolTableEntry {
 public:
-    SymbolTableEntry(int tokenType, const std::string &symbol)
+    SymbolTableEntry(int tokenType, const std::string& symbol)
         : symbol(symbol), tokenType(tokenType) {}
 
     std::string symbol; /**< 符号字符串 */
@@ -38,12 +39,12 @@ public:
 
 class SymbolTable {
 public:
-    void insertSymbol(const std::string &symbol, int tokenType) {
+    void insertSymbol(const std::string& symbol, int tokenType) {
         entries.emplace_back(tokenType, symbol);
     }
 
     void printTable() {
-        for (const auto &entry : entries) {
+        for (const auto& entry : entries) {
             std::cout << "(" << entry.tokenType << ", \"" << entry.symbol
                       << "\")\n";
         }
@@ -55,15 +56,15 @@ private:
 
 SymbolTable symbolTable;
 
-bool isKeyword(const std::string &word) {
+bool isKeyword(const std::string& word) {
     return KEYWORDS.find(word) != KEYWORDS.end();
 }
 
-bool isSeparator(const std::string &charStr) {
+bool isSeparator(const std::string& charStr) {
     return SEPARATORS.find(charStr) != SEPARATORS.end();
 }
 
-void handleAlpha(const std::string &code, size_t &index) {
+void handleAlpha(const std::string& code, size_t& index) {
     size_t end = index + 1;
     while (end < code.size() && isalnum(code[end])) {
         end++;
@@ -73,7 +74,7 @@ void handleAlpha(const std::string &code, size_t &index) {
     symbolTable.insertSymbol(word, isKeyword(word) ? KEYWORD : IDENTIFIER);
 }
 
-void handleDigit(const std::string &code, size_t &index) {
+void handleDigit(const std::string& code, size_t& index) {
     size_t end = index + 1;
     while (end < code.size() && isdigit(code[end])) {
         end++;
@@ -83,7 +84,7 @@ void handleDigit(const std::string &code, size_t &index) {
     index = end - 1;
 }
 
-bool handleSeparatorOrOperator(const std::string &code, size_t &index) {
+bool handleSeparatorOrOperator(const std::string& code, size_t& index) {
     std::string currentChar(&code[index], 1);
 
     if (currentChar == "<" || currentChar == ">" || currentChar == ":") {
@@ -114,7 +115,7 @@ bool handleSeparatorOrOperator(const std::string &code, size_t &index) {
  *
  * @param code 输入源代码
  */
-void analyze(const std::string &code) {
+void analyze(const std::string& code) {
     for (size_t i = 0; i < code.size(); i++) {
         if (isspace(code[i])) {
             continue;
@@ -133,7 +134,7 @@ void analyze(const std::string &code) {
     }
 }
 
-std::string readInput(const std::string &path) {
+std::string readInput(const std::string& path) {
     std::ifstream inputFile(path);
     if (!inputFile.is_open()) {
         std::cerr << "错误：无法打开文件！" << std::endl;
@@ -144,8 +145,13 @@ std::string readInput(const std::string &path) {
 }
 
 int main() {
-    const std::string codePath = "./input.txt";
-    const std::string code = readInput(codePath);
+    // const std::string codePath = "./input.txt";
+    std::string code, temp;
+    std::cin  >> code;
+
+    while(std::cin >> temp){
+        code += temp;
+    }
 
     if (!code.empty()) {
         analyze(code);
